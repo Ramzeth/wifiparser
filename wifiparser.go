@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/xml"
 	"fmt"
 	"github.com/google/gopacket"
@@ -12,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -197,9 +199,13 @@ func main() {
 	}
 
 	//generate output
-	fmt.Println("ESSID;Hidden;BSSID;Protocol;Auth;Channel;Power;Manufacturer;Uptime;Location;WPS")
+	csvWriter := csv.NewWriter(os.Stdout)
+	defer csvWriter.Flush()
+	header := []string{"ESSID", "Hidden", "BSSID", "Protocol", "Auth", "Channel", "Power", "Manufacturer", "Uptime", "Location", "WPS"}
+	csvWriter.Write(header)
 	for _, n := range networks {
 		n.wps = networksWPS[n.bssid]
-		fmt.Printf("%v;%v;%v;%v;%v;%v;%v;%v;%v;%v;%v\n", n.essid, n.hidden, n.bssid, n.protocol, n.auth, n.channel, n.power, n.manufacturer, n.uptime, n.location, n.wps)
+		record := []string{n.essid, n.hidden, n.bssid, n.protocol, n.auth, strconv.Itoa(n.channel), strconv.Itoa(n.power), n.manufacturer, n.uptime, n.location, n.wps}
+		csvWriter.Write(record)
 	}
 }
