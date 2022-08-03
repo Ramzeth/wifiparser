@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/xml"
+	"github.com/Ramzeth/wifiparser/internal"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/html/charset"
 	"os"
 	"strings"
-	"wifiparser/internal"
 )
 
 type netXML struct {

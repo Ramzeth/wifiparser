@@ -110,6 +110,11 @@ func (d *Database) AddRecord(newRecord DBrecord) {
 	log.Tracef("Record addded: %v", newRecord)
 }
 
+// Get all raw records
+func (d *Database) GetRecords() []DBrecord {
+	return d.records
+}
+
 func (d *Database) GetRecordsNum() int {
 	return len(d.records)
 }

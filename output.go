@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/csv"
+	"github.com/Ramzeth/wifiparser/internal"
 	"io"
 	"strconv"
 	"strings"
-	"wifiparser/internal"
 )
 
 //ToDO remove
@@ -93,7 +93,7 @@ import (
 func outESS(db internal.Database, w io.Writer) {
 	csvWriter := csv.NewWriter(w)
 	defer csvWriter.Flush()
-	header := []string{"ESSID", "Anomaly", "Connected ESS", "AKM", "Encryption", "Uptime", "Location", "WPS"}
+	header := []string{"ESSID", "Anomaly", "Connected ESS", "AKM", "Encryption", "Uptime", "BestPower", "Location", "WPS"}
 	csvWriter.Write(header)
 	// Output data for non hidden ESS
 	essList := db.GetESSIDs()
@@ -109,6 +109,7 @@ func outESS(db internal.Database, w io.Writer) {
 		wpsMap := make(map[string]bool)
 		var maxUptime uint64
 		bestLocation := ""
+		bestPower := -1000
 		for _, s := range setups {
 			tagList = append(tagList, db.GetBSStags(s.BSSID)...)
 			akmMap[s.AKM] = true
@@ -117,10 +118,14 @@ func outESS(db internal.Database, w io.Writer) {
 			}
 			if s.Uptime > maxUptime {
 				maxUptime = s.Uptime
+			}
+			if s.Power > bestPower {
 				bestLocation = s.Location
+				bestPower = s.Power
 			}
 			wpsMap[s.WPS] = true
 		}
+
 		var akmList []string
 		var encList []string
 		var wpsList []string
@@ -136,11 +141,11 @@ func outESS(db internal.Database, w io.Writer) {
 
 		// Write ess data
 		essAnomaly := strings.Join(tagList, ";")
-		connected := strings.Join(db.GetConnectedESS(ess), ";")
+		connected := strings.Join(db.GetConnectedESS(ess), "\n")
 		akm := strings.Join(akmList, "/")
 		encryption := strings.Join(encList, "/")
 		wps := strings.Join(wpsList, "/")
-		record := []string{ess, essAnomaly, connected, akm, encryption, parsedTime(maxUptime), bestLocation, wps}
+		record := []string{ess, essAnomaly, connected, akm, encryption, parsedTime(maxUptime), strconv.Itoa(bestPower), bestLocation, wps}
 		csvWriter.Write(record)
 	}
 }
@@ -168,10 +173,19 @@ func outBSS(db internal.Database, w io.Writer) {
 	}
 }
 
-//func outAPs(db internal,w io.Writer)  {
-//	csvWriter := csv.NewWriter(w)
-//	defer csvWriter.Flush()
-//	header := []string{"ESSID", "Description", "BSSID", "AKM", "Encryption", "Channel", "Power", "Manufacturer", "Uptime", "Location", "WPS"}
-//	csvWriter.Write(header)
-//
-//}
+func outRaw(db internal.Database, w io.Writer) {
+	csvWriter := csv.NewWriter(w)
+	defer csvWriter.Flush()
+	header := []string{"ESSID", "BSSID", "AKM", "Encryption", "Channel", "Power", "Uptime", "Location", "WPS"}
+	csvWriter.Write(header)
+	for _, r := range db.GetRecords() {
+		var encs []string
+		for e := range r.Encryptions {
+			encs = append(encs, e)
+		}
+		writeEncryption := strings.Join(encs, "/")
+		record := []string{r.ESSID, r.BSSID, r.AKM, writeEncryption, strconv.Itoa(r.Channel), strconv.Itoa(r.Power), parsedTime(r.Uptime), r.Location, r.WPS}
+		csvWriter.Write(record)
+	}
+
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Ramzeth/wifiparser/internal"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"wifiparser/internal"
 )
 
 func parsedTime(timestamp uint64) string {
@@ -153,12 +153,15 @@ func main() {
 	//generate output
 	netsFile, err := os.Create("./ESS.csv")
 	apsFile, err := os.Create("./BSS.csv")
+	rawFile, err := os.Create("./RAW.csv")
 	defer netsFile.Close()
 	defer apsFile.Close()
+	defer rawFile.Close()
 	log.Infof("Unique ESS found: %v", len(db.GetESSIDs()))
 	log.Infof("Unique BSS found: %v", len(db.GetBSSIDs()))
 	outBSS(db, apsFile)
 	outESS(db, netsFile)
+	outRaw(db, rawFile)
 
 	// Output other ap setups, hidden ess
 

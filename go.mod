@@ -1,4 +1,4 @@
-module wifiparser
+module github.com/Ramzeth/wifiparser
 
 go 1.18
 
